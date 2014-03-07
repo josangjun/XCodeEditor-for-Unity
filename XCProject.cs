@@ -1,9 +1,13 @@
+#define SEARCH_LIBRARY
 using UnityEngine;
 using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Linq;
+
+#pragma warning disable 414
 
 namespace UnityEditor.XCodeEditor
 {
@@ -239,7 +243,22 @@ namespace UnityEditor.XCodeEditor
 			modified = true;
 			return modified;	
 		}
-		
+
+		public bool AddOtherLinkerFlags(string flag)
+		{
+			return AddOtherLinkerFlags(new PBXList(flag));
+		}
+
+		public bool AddOtherLinkerFlags(PBXList flags)
+		{
+			foreach (KeyValuePair<string, XCBuildConfiguration> buildConfig in buildConfigurations)
+			{
+				buildConfig.Value.AddOtherLinkerFlags(flags);
+			}
+			modified = true;
+			return modified;
+		}
+
 		public bool AddHeaderSearchPaths( string path )
 		{
 			return AddHeaderSearchPaths( new PBXList( path ) );
@@ -257,6 +276,7 @@ namespace UnityEditor.XCodeEditor
 		
 		public bool AddLibrarySearchPaths( string path )
 		{
+			path = System.IO.Path.GetFullPath(path);
 			return AddLibrarySearchPaths( new PBXList( path ) );
 		}
 		
@@ -304,14 +324,28 @@ namespace UnityEditor.XCodeEditor
 //					return default(T);
 //			}
 //		}
-		
+
+		//[System.Diagnostics.Conditional("SEARCH_LIBRARY")]
+		public bool SearchLibrary(string filePath)
+		{
+			var ext = filePath.Substring(filePath.LastIndexOf('.'));
+
+			if (ext == ".a") {
+				return true;
+			} else {
+				return false;
+			}
+		}
+
 		public PBXDictionary AddFile( string filePath, PBXGroup parent = null, string tree = "SOURCE_ROOT", bool createBuildFiles = true, bool weak = false )
 		{
+			SearchLibrary(filePath);
+
 			PBXDictionary results = new PBXDictionary();
 			string absPath = string.Empty;
 			
 			if( Path.IsPathRooted( filePath ) ) {
-				absPath = filePath;
+				absPath = System.IO.Path.GetFullPath(filePath);
 //				Debug.Log( "Is rooted: " + absPath );
 			}
 			else if( tree.CompareTo( "SDKROOT" ) != 0) {
@@ -461,6 +495,7 @@ namespace UnityEditor.XCodeEditor
 		
 		public bool AddFolder( string folderPath, PBXGroup parent = null, string[] exclude = null, bool recursive = true, bool createBuildFile = true )
 		{
+			folderPath = System.IO.Path.GetFullPath(folderPath);
 			if( !Directory.Exists( folderPath ) )
 				return false;
 			DirectoryInfo sourceDirectoryInfo = new DirectoryInfo( folderPath );
@@ -501,7 +536,7 @@ namespace UnityEditor.XCodeEditor
 				if( Regex.IsMatch( file, regexExclude ) ) {
 					continue;
 				}
-//				Debug.Log( "--> " + file + ", " + newGroup );
+				Debug.Log( "--> " + file + ", " + newGroup );
 				AddFile( file, newGroup, "SOURCE_ROOT", createBuildFile );
 			}
 			
@@ -881,20 +916,26 @@ namespace UnityEditor.XCodeEditor
 			
 			Debug.Log( "Adding files..." );
 			foreach( string filePath in mod.files ) {
-				string absoluteFilePath = System.IO.Path.Combine( mod.path, filePath );
+				string absoluteFilePath = System.IO.Path.GetFullPath(System.IO.Path.Combine( mod.path, filePath ));
 				this.AddFile( absoluteFilePath, modGroup );
 			}
 			
 			Debug.Log( "Adding folders..." );
 			foreach( string folderPath in mod.folders ) {
-				string absoluteFolderPath = System.IO.Path.Combine( mod.path, folderPath );
-				this.AddFolder( absoluteFolderPath, modGroup, (string[])mod.excludes.ToArray( typeof(string) ) );
+				string absoluteFolderPath = System.IO.Path.GetFullPath(System.IO.Path.Combine( mod.path, folderPath ));
+				this.AddFolder( absoluteFolderPath, modGroup, System.Array.ConvertAll(mod.excludes.ToArray(), (arg) => (string)arg));
 			}
 			
 			Debug.Log( "Adding headerpaths..." );
 			foreach( string headerpath in mod.headerpaths ) {
 				string absoluteHeaderPath = System.IO.Path.Combine( mod.path, headerpath );
 				this.AddHeaderSearchPaths( absoluteHeaderPath );
+			}
+
+			Debug.Log ("Adding otherlinkerflags...");
+			foreach (string flag in mod.otherLinkerFlags)
+			{
+				this.AddOtherLinkerFlags(flag);
 			}
 			
 			this.Consolidate();

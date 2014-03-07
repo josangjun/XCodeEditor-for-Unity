@@ -9,6 +9,7 @@ namespace UnityEditor.XCodeEditor
 		protected const string HEADER_SEARCH_PATHS_KEY = "HEADER_SEARCH_PATHS";
 		protected const string LIBRARY_SEARCH_PATHS_KEY = "LIBRARY_SEARCH_PATHS";
 		protected const string OTHER_C_FLAGS_KEY = "OTHER_CFLAGS";
+		protected const string OTHER_LINKER_FLAGS_KEY = "OTHER_LDFLAGS";
 		
 		public XCBuildConfiguration( string guid, PBXDictionary dictionary ) : base( guid, dictionary )
 		{
@@ -40,8 +41,8 @@ namespace UnityEditor.XCodeEditor
 			
 			foreach( string path in paths ) {
 				string currentPath = path;
-				if( recursive && !path.EndsWith( "/**" ) )
-					currentPath += "**";
+//				if( recursive && !path.EndsWith( "/**" ) )
+//					currentPath += "**";
 				
 //				Debug.Log( "adding: " + currentPath );
 				if( !((PBXDictionary)_data[BUILDSETTINGS_KEY]).ContainsKey( key ) ) {
@@ -53,7 +54,7 @@ namespace UnityEditor.XCodeEditor
 					((PBXDictionary)_data[BUILDSETTINGS_KEY])[key] = list;
 				}
 				
-				currentPath = "\\\"" + currentPath + "\\\"";
+				//currentPath = "\\\"" + currentPath + "\\\"";
 				
 				if( !((PBXList)((PBXDictionary)_data[BUILDSETTINGS_KEY])[key]).Contains( currentPath ) ) {
 					((PBXList)((PBXDictionary)_data[BUILDSETTINGS_KEY])[key]).Add( currentPath );
@@ -81,6 +82,14 @@ namespace UnityEditor.XCodeEditor
 			flags.Add( flag );
 			return AddOtherCFlags( flags );
 		}
+
+		public bool AddOtherLinkerFlags(string flag)
+		{
+			Debug.Log("INIZIO 3");
+			PBXList flags = new PBXList();
+			flags.Add(flag);
+			return AddOtherLinkerFlags(flags);
+		}
 		
 		public bool AddOtherCFlags( PBXList flags )
 		{
@@ -104,6 +113,35 @@ namespace UnityEditor.XCodeEditor
 				
 				if( !((PBXList)((PBXDictionary)_data[BUILDSETTINGS_KEY])[OTHER_C_FLAGS_KEY]).Contains( flag ) ) {
 					((PBXList)((PBXDictionary)_data[BUILDSETTINGS_KEY])[OTHER_C_FLAGS_KEY]).Add( flag );
+					modified = true;
+				}
+			}
+			
+			return modified;
+		}
+
+		public bool AddOtherLinkerFlags( PBXList flags )
+		{
+			//Debug.Log( "INIZIO 2" );
+			
+			bool modified = false;
+			
+			if( !ContainsKey( BUILDSETTINGS_KEY ) )
+				this.Add( BUILDSETTINGS_KEY, new PBXDictionary() );
+			
+			foreach( string flag in flags ) {
+				
+				if( !((PBXDictionary)_data[BUILDSETTINGS_KEY]).ContainsKey( OTHER_LINKER_FLAGS_KEY ) ) {
+					((PBXDictionary)_data[BUILDSETTINGS_KEY]).Add( OTHER_LINKER_FLAGS_KEY, new PBXList() );
+				}
+				else if ( ((PBXDictionary)_data[BUILDSETTINGS_KEY])[ OTHER_LINKER_FLAGS_KEY ] is string ) {
+					string tempString = (string)((PBXDictionary)_data[BUILDSETTINGS_KEY])[OTHER_LINKER_FLAGS_KEY];
+					((PBXDictionary)_data[BUILDSETTINGS_KEY])[ OTHER_LINKER_FLAGS_KEY ] = new PBXList();
+					((PBXList)((PBXDictionary)_data[BUILDSETTINGS_KEY])[OTHER_LINKER_FLAGS_KEY]).Add( tempString );
+				}
+				
+				if( !((PBXList)((PBXDictionary)_data[BUILDSETTINGS_KEY])[OTHER_LINKER_FLAGS_KEY]).Contains( flag ) ) {
+					((PBXList)((PBXDictionary)_data[BUILDSETTINGS_KEY])[OTHER_LINKER_FLAGS_KEY]).Add( flag );
 					modified = true;
 				}
 			}
