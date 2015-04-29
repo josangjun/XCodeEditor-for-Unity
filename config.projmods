@@ -1,0 +1,26 @@
+{
+    "group": "Services",
+    "libs": ["libsqlite3.dylib"],
+    "frameworks":[
+		"StoreKit.framework",
+		"CoreTelephony.framework",
+		"CoreText.framework",
+		"Security.framework",
+		"SystemConfiguration.framework",
+		"CoreLocation.framework",
+		"MediaPlayer.framework",
+		"AdSupport.framework:",
+	],
+    "headerpaths": [],
+    "files": [],
+    "folders": [
+		"../../build/iphone"
+	],
+    "excludes": ["^.*.DS_Store$","^.*.meta$", "^.*.mdown^", "^.*.pdf$", "^.*.svn$"],
+    "buildSettings": { 
+    	"GCC_ENABLE_CPP_EXCEPTIONS": "YES",
+    	"GCC_ENABLE_OBJC_EXCEPTIONS": "YES",
+    	"OTHER_LDFLAGS" : ["-ObjC", "-all_load"],
+		"OTHER_CFLAGS" : ["-fno-objc-arc"]
+    }
+}

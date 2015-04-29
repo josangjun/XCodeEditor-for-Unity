@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using Json = MiniJSON;
 
@@ -16,8 +15,8 @@ namespace UnityEditor.XCodeEditor
 //		private ArrayList files;
 //		private ArrayList folders;
 //		private ArrayList excludes;
-		private Dictionary<string, object> _datastore;
-		private List<object> _libs;
+		private Hashtable _datastore;
+		private ArrayList _libs;
 		
 		public string name { get; private set; }
 		public string path { get; private set; }
@@ -28,17 +27,17 @@ namespace UnityEditor.XCodeEditor
 			}
 		}
 		
-		public List<object> patches {
+		public ArrayList patches {
 			get {
-				return (List<object>)_datastore["patches"];
+				return (ArrayList)_datastore["patches"];
 			}
 		}
 		
-		public List<object> libs {
+		public ArrayList libs {
 			get {
 				if( _libs == null ) {
-					_libs = new List<object>( ((List<object>)_datastore["libs"]).Count );
-					foreach( string fileRef in (List<object>)_datastore["libs"] ) {
+					_libs = new ArrayList( ((ArrayList)_datastore["libs"]).Count );
+					foreach( string fileRef in (ArrayList)_datastore["libs"] ) {
 						_libs.Add( new XCModFile( fileRef ) );
 					}
 				}
@@ -46,39 +45,39 @@ namespace UnityEditor.XCodeEditor
 			}
 		}
 		
-		public List<object> frameworks {
+		public ArrayList frameworks {
 			get {
-				return (List<object>)_datastore["frameworks"];
+				return (ArrayList)_datastore["frameworks"];
 			}
 		}
 		
-		public List<object> headerpaths {
+		public ArrayList headerpaths {
 			get {
-				return (List<object>)_datastore["headerpaths"];
-			}
-		}
-		
-		public List<object> files {
-			get {
-				return (List<object>)_datastore["files"];
-			}
-		}
-		
-		public List<object> folders {
-			get {
-				return (List<object>)_datastore["folders"];
-			}
-		}
-		
-		public List<object> excludes {
-			get {
-				return (List<object>)_datastore["excludes"];
+				return (ArrayList)_datastore["headerpaths"];
 			}
 		}
 
-		public List<object> otherLinkerFlags {
+		public Hashtable buildSettings {
 			get {
-				return (List<object>)_datastore["otherlinkerflags"];
+				return (Hashtable)_datastore["buildSettings"];
+			}
+		}
+		
+		public ArrayList files {
+			get {
+				return (ArrayList)_datastore["files"];
+			}
+		}
+		
+		public ArrayList folders {
+			get {
+				return (ArrayList)_datastore["folders"];
+			}
+		}
+		
+		public ArrayList excludes {
+			get {
+				return (ArrayList)_datastore["excludes"];
 			}
 		}
 		
@@ -90,10 +89,10 @@ namespace UnityEditor.XCodeEditor
 			}
 			
 			name = System.IO.Path.GetFileNameWithoutExtension( filename );
-			path = System.IO.Path.GetFullPath(System.IO.Path.GetDirectoryName( filename ));
+			path = System.IO.Path.GetDirectoryName( filename );
 			
 			string contents = projectFileInfo.OpenText().ReadToEnd();
-			_datastore = (Dictionary<string, object>)MiniJSON.Json.Deserialize( contents );
+			_datastore = (Hashtable)XMiniJSON.jsonDecode( contents );
 			
 //			group = (string)_datastore["group"];
 //			patches = (ArrayList)_datastore["patches"];
